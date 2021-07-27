@@ -6,7 +6,7 @@ from decimal import Decimal
 import urllib.parse
 
 import httpx
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, SoupStrainer
 from starlette.concurrency import run_in_threadpool
 
 from database import db
@@ -29,11 +29,18 @@ async def get_property_availability(property_slugs: Union[str, List[str]] = None
         fetch_property_html(p.availability_url) for p in properties
         if p.slug in property_slugs
     ]
+    # import time
+    # t0 = time.time()
     html_results = await asyncio.gather(*tasks)
+    # tf = time.time()
+    # print(f'request time = {tf-t0:.3f} sec')
     html_property_list = [
         HtmlProperty(html, property_) for html, property_ in zip(html_results, properties)
     ]
+    # t0=time.time()
     data = await run_in_threadpool(collect_data_from_html, html_property_list)
+    # tf=time.time()
+    # print(f'parse time = {tf-t0:.3f} sec')
     return data
 
 
@@ -43,7 +50,7 @@ async def fetch_property_html(property_availability_url: str):
     }
     async with httpx.AsyncClient() as client:
         res = await client.get(property_availability_url, headers=headers)
-    html = res.text
+    html = res.content
     return html
 
 
@@ -55,7 +62,7 @@ def collect_data_from_html(html_property_list: List[HtmlProperty]):
 
 
 def parse_html(html, property_, data):
-    soup = BeautifulSoup(html, 'lxml')
+    soup = BeautifulSoup(html, 'lxml', parse_only=SoupStrainer('table'))
     months = soup.find_all('table', class_='rc-calendar')
     for month in months:
         caption = month.find('caption').get_text().replace(u'\xa0', u' ')

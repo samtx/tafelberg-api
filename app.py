@@ -26,15 +26,6 @@ def get_all_property_information():
     return res
 
 
-@app.get("/properties/{property_slug}", response_model=Property)
-def get_all_property_information(property_slug: str):
-    """
-    Return property information in database
-    """
-    res = get_property_or_404(property_slug)
-    return res
-
-
 @app.get("/availability", response_model=PropertyAvailabilityResponse)
 async def get_availability():
     # check cache
