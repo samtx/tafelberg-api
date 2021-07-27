@@ -1,49 +1,61 @@
 import asyncio
+from collections import namedtuple
+from schemas import PropertyAvailabilityData
+from typing import List, Union
+from decimal import Decimal
 
 import httpx
 from bs4 import BeautifulSoup
+from starlette.concurrency import run_in_threadpool
+
+from database import db
 
 
-async def get_property_availability(db, property_slugs=None):
+HtmlProperty = namedtuple('HtmlProperty', ['html', 'property'])
+
+async def get_property_availability(property_slugs: Union[str, List[str]] = None):
     """
     Scrape the Rockport Escapes website to get current availability
-    db: dictionary database of properties
     property_slugs: list of properties to get availability data from
         None = all properties
     """
     if property_slugs is None or not property_slugs:
-        property_slugs = db.properties.keys()
-    properties = tuple(db.properties.values())
+        property_slugs = tuple(db['properties'].keys())
+    if isinstance(property_slugs, str):
+        property_slugs = (property_slugs,)
+    properties = tuple(db['properties'].values())
     tasks = [
-        fetch_property_html(p.availibility_url) for p in properties
-        if p in property_slugs
+        fetch_property_html(p.availability_url) for p in properties
+        if p.slug in property_slugs
     ]
     html_results = await asyncio.gather(*tasks)
-    data = {}
-    for html, property_ in zip(html_results, properties):
-        data = parse_html(html, property_, data)
+    html_property_list = [
+        HtmlProperty(html, property_) for html, property_ in zip(html_results, properties)
+    ]
+    data = await run_in_threadpool(collect_data_from_html, html_property_list)
     return data
-
-
-async def get_one_property_availability(db):
-    pass
 
 
 async def fetch_property_html(property_availability_url: str):
     headers = {
         "User-Agent": "Tafelberg API/Rockport Escapes Scraper (Sam Friedman, samtx@outlook.com)"
     }
-    async with httpx.AsyncClient as client:
+    async with httpx.AsyncClient() as client:
         res = await client.get(property_availability_url, headers=headers)
     html = res.text
     return html
 
 
-def parse_html(html, property_, data=None):
+def collect_data_from_html(html_property_list: List[HtmlProperty]):
+    data = {}
+    for item in html_property_list:
+        data = parse_html(item.html, item.property, data)
+    return data
+
+
+def parse_html(html, property_, data):
     soup = BeautifulSoup(html, 'lxml')
     months = soup.find_all('table', class_='rc-calendar')
-    if data is None:
-        data = {}
     for month in months:
         caption = month.find('caption').get_text().replace(u'\xa0', u' ')
         month_str, year_str = caption.split()
@@ -53,20 +65,31 @@ def parse_html(html, property_, data=None):
         for day in days:
             day_of_month = int(day.find('span', class_='mday').get_text())
             price = day.find(class_='rc-price')
-            price = price.get_text(strip=True) if price else None
+            price = price_string_to_decimal(price.get_text(strip=True)) if price else None
             avail_classes = day['class']
             available = is_available(avail_classes)
             date_str = f'{year}-{month_int:02d}-{day_of_month:02d}'
-            data_item = {
-                'property': property_,
-                'price': price,
-                'available': available
-            }
+            availability = PropertyAvailabilityData(
+                property_slug=property_.slug,
+                price=price,
+                available=available
+            )
             if date_str in data:
-                data[date_str].append(data_item)
+                data[date_str][property_.slug] = availability
             else:
-                data[date_str] = [data_item]
+                data[date_str] = {property_.slug: availability}
     return data
+
+
+def price_string_to_decimal(price_string):
+    """
+    price_string = "  $350  " --> Decimal('350.00')
+    """
+    price = price_string.strip('$').replace(',','')
+    price = float(price)
+    out_str = f"{price:.2f}"
+    dec = Decimal(out_str)
+    return dec
 
 
 def month_to_int(month_str):
@@ -95,3 +118,10 @@ def is_available(class_list):
         return 0
     else:
         raise Exception('is_available error')
+
+
+def generate_booking_url(property_, params):
+    """
+    Generate booking url based on query parameters
+    """
+    base_url = property_.booking_url
