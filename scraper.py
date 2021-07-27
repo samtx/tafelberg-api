@@ -4,19 +4,29 @@ import httpx
 from bs4 import BeautifulSoup
 
 
-async def get_availability_data(db):
+async def get_property_availability(db, property_slugs=None):
     """
     Scrape the Rockport Escapes website to get current availability
-
     db: dictionary database of properties
+    property_slugs: list of properties to get availability data from
+        None = all properties
     """
+    if property_slugs is None or not property_slugs:
+        property_slugs = db.properties.keys()
     properties = tuple(db.properties.values())
-    tasks = [fetch_property_html(p.availibility_url) for p in properties]
+    tasks = [
+        fetch_property_html(p.availibility_url) for p in properties
+        if p in property_slugs
+    ]
     html_results = await asyncio.gather(*tasks)
     data = {}
     for html, property_ in zip(html_results, properties):
         data = parse_html(html, property_, data)
     return data
+
+
+async def get_one_property_availability(db):
+    pass
 
 
 async def fetch_property_html(property_availability_url: str):
