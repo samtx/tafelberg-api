@@ -3,6 +3,7 @@ from collections import namedtuple
 from schemas import PropertyAvailabilityData
 from typing import List, Union
 from decimal import Decimal
+import urllib.parse
 
 import httpx
 from bs4 import BeautifulSoup
@@ -120,8 +121,21 @@ def is_available(class_list):
         raise Exception('is_available error')
 
 
-def generate_booking_url(property_, params):
+def generate_booking_url(property_, input_params):
     """
     Generate booking url based on query parameters
     """
+    query_params = {
+        'rcav[begin]': input_params['date_begin'],
+        'rcav[end]': input_params['date_end'],
+        'rcav[adult]': input_params['num_adults'],
+        'rcav[child]': input_params['num_children'],
+        'rcav[eid]': property_.eid,
+        f'rcav[IDs][{property_.eid}]': property_.product_id,
+        'eid': property_.eid
+    }
     base_url = property_.booking_url
+    query_string = urllib.parse.urlencode(query_params, quote_via=urllib.parse.quote)
+    url = f"{base_url}?{query_string}"
+    return url
+

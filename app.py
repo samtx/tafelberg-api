@@ -1,3 +1,5 @@
+import datetime
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -48,9 +50,12 @@ async def get_availability():
     return res
 
 
+def today_factory():
+    return datetime.date.today()
+
 
 @app.get("/book/{property_slug}")
-async def book_property(
+def book_property(
     property_slug: str,
     date_begin: str,
     date_end: str,
