@@ -8,15 +8,14 @@ ENV PYTHONUNBUFFERED 1
 RUN pip install --upgrade pip
 
 RUN mkdir -p /app
-RUN adduser tafelberg-api
+RUN adduser --disabled-login --gecos 'tafelberg-api' tafelberg-api
 RUN chown -R tafelberg-api:tafelberg-api /app
 USER tafelberg-api
 WORKDIR /app
 
+ENV PATH=/home/tafelberg-api/.local/bin:$PATH
 COPY requirements.txt .
 RUN python -m pip install --user -r requirements.txt
-
-ENV PATH=/home/tafelberg-api/.local/bin:$PATH
 
 COPY --chown=tafelberg-api:tafelberg-api . .
 
