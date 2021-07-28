@@ -5,19 +5,20 @@ RUN apt-get update
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
+RUN pip install --upgrade pip
+
+RUN mkdir -p /app
+RUN adduser tafelberg-api
+RUN chown -R tafelberg-api:tafelberg-api /app
+USER tafelberg-api
 WORKDIR /app
 
-# RUN adduser appuser
-# RUN chown appuser:appuser -R /app
-# USER appuser
-
 COPY requirements.txt .
-RUN python -m pip install --upgrade pip
-RUN python -m pip install -r requirements.txt
+RUN python -m pip install --user -r requirements.txt
 
-# ENV PATH=/home/appuser/.local/bin:$PATH
+ENV PATH=/home/tafelberg-api/.local/bin:$PATH
 
-COPY . .
+COPY --chown=tafelberg-api:tafelberg-api . .
 
 EXPOSE 8000
 
