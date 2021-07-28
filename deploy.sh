@@ -1,21 +1,34 @@
 #!/bin/bash
+set -e
+
+# Run commands on tafelberg-api.samtx.dev server with ssh
+
+run_on_server () {
+    ssh sam@tafelberg-api.samtx.dev "cd /opt/tafelberg-api && $1"
+}
+
+echo "Connect to tafelberg-api.samtx:/opt/tafelberg-api"
+
+echo "check pwd"
+run_on_server "pwd"
 
 echo "Pull latest commit"
-git pull
+run_on_server "git pull"
 
 echo "Build docker image"
-docker build -t tafelberg-api:latest .
+run_on_server "docker build -t tafelberg-api:latest ."
 
 echo "Stop current running container"
-docker stop tafelberg-api || true
+run_on_server "docker stop tafelberg-api || true"
 
 echo "Remove named container"
-docker rm tafelberg-api || true
+run_on_server "docker rm tafelberg-api || true"
 
 echo "Run new container image"
-docker run -d \
+run_on_server "docker run -d \
     --name tafelberg-api \
     -p 8000:8000 \
     --log-driver=local \
     --restart=unless-stopped \
     tafelberg-api:latest
+"
