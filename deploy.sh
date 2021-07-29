@@ -19,7 +19,7 @@ echo "Build docker image"
 run_on_server "docker build -t tafelberg-api:latest ."
 
 echo "Run tests"
-run_on_server "./run_tests.sh"
+run_on_server "docker run tafelberg-api bash -c 'pip install --user pytest pytest-asyncio && pytest'"
 
 echo "Stop current running container"
 run_on_server "docker stop tafelberg-api || true"
