@@ -5,7 +5,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from routes import router
-from api_docs import tafelberg_api_openapi
 
 app = FastAPI(
     title="Tafelberg Rentals API",

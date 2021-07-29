@@ -18,6 +18,9 @@ run_on_server "git pull"
 echo "Build docker image"
 run_on_server "docker build -t tafelberg-api:latest ."
 
+echo "Run tests"
+run_on_server "docker run tafelberg-api pip install pytest pytest-asyncio && pytest"
+
 echo "Stop current running container"
 run_on_server "docker stop tafelberg-api || true"
 
