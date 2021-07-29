@@ -18,7 +18,3 @@ async def test_properties():
     assert response.status_code == 200
     properties = response.json()['properties']
     assert len(properties) == 4
-
-@pytest.mark.asyncio
-async def test_fail():
-    assert False
