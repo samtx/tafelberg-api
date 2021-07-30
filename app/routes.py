@@ -1,12 +1,13 @@
 import datetime
+from pathlib import Path
 
 from fastapi import APIRouter
 from fastapi.responses import HTMLResponse
 
-from scraper import get_property_availability, generate_booking_url
-from database import db, get_property_or_404
-from cache import cache
-from schemas import PropertyResponse, PropertyAvailabilityResponse
+from .scraper import get_property_availability, generate_booking_url
+from .database import db, get_property_or_404
+from .cache import cache
+from .schemas import PropertyResponse, PropertyAvailabilityResponse
 
 
 router = APIRouter()
@@ -14,7 +15,8 @@ router = APIRouter()
 
 @router.get("/", include_in_schema=False)
 def home():
-    with open("index.html", "r") as f:
+    fpath = Path(__file__).parent / 'index.html'
+    with open(fpath, "r") as f:
         html = f.read()
     return HTMLResponse(html)
 

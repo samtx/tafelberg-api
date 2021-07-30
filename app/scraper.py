@@ -1,6 +1,5 @@
 import asyncio
 from collections import namedtuple
-from schemas import PropertyAvailabilityData
 from typing import List, Union
 from decimal import Decimal
 import urllib.parse
@@ -11,7 +10,8 @@ from bs4 import BeautifulSoup, SoupStrainer
 from starlette.concurrency import run_in_threadpool
 from dotenv import load_dotenv
 
-from database import db
+from .schemas import PropertyAvailabilityData
+from .database import db
 
 
 load_dotenv()

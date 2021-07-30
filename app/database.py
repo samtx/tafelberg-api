@@ -1,6 +1,6 @@
 from fastapi import HTTPException
 
-from schemas import Property
+from .schemas import Property
 
 
 muizenberg = Property(
