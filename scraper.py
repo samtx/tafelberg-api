@@ -4,12 +4,17 @@ from schemas import PropertyAvailabilityData
 from typing import List, Union
 from decimal import Decimal
 import urllib.parse
+import os
 
 import httpx
 from bs4 import BeautifulSoup, SoupStrainer
 from starlette.concurrency import run_in_threadpool
+from dotenv import load_dotenv
 
 from database import db
+
+
+load_dotenv()
 
 
 HtmlProperty = namedtuple('HtmlProperty', ['html', 'property'])
@@ -46,7 +51,7 @@ async def get_property_availability(property_slugs: Union[str, List[str]] = None
 
 async def fetch_property_html(property_availability_url: str):
     headers = {
-        "User-Agent": "Tafelberg API/Rockport Escapes Scraper (Sam Friedman, samtx@outlook.com)"
+        "User-Agent": f"Tafelberg API/Rockport Escapes Scraper (Sam Friedman, {os.getenv('TAFELBERG_API_CONTACT_EMAIL')})"
     }
     async with httpx.AsyncClient() as client:
         res = await client.get(property_availability_url, headers=headers)
