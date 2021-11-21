@@ -21,4 +21,4 @@ COPY --chown=tafelberg-api:tafelberg-api app/ app/
 
 EXPOSE 8000
 
-CMD ["gunicorn", "-b", "0.0.0.0:8000", "-w", "2", "-k", "uvicorn.workers.UvicornWorker" ,"--access-logfile=-", "app.main:app"]
+CMD ["gunicorn", "-b", "0.0.0.0:8000", "-w", "1", "-k", "uvicorn.workers.UvicornWorker" ,"--access-logfile=-", "app.main:app"]
